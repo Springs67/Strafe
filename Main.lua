@@ -1,36 +1,41 @@
 local base = 'https://raw.githubusercontent.com/Springs67/Strafe/refs/heads/Main/'
 local function getContents(link: string)
-    print(link)
     local suc, ret = pcall(function()
-        return game:HttpGet(base .. link)
+        return game:HttpGet(base .. link .. "?t=" .. tick())
     end)
-
-    return suc and ret or 'print("failed to recieve contents of "'..link..')'
+    return suc and ret or nil
 end
-local function install(file: string)
-    if not isfile(file) then
-        local oldFile = file
-        file = file:gsub('Strafe/', '')
 
-        writefile(oldFile, getContents(file))
+local function ensureFolder(path)
+    local parts = path:split("/")
+    local current = ""
+    for i = 1, #parts do
+        current = current .. parts[i] .. "/"
+        if not isfolder(current) then
+            makefolder(current)
+    end
+end
 
-        repeat task.wait() until isfile(oldFile)
-
-        return readfile(oldFile)
+local function syncFile(fileName: string)
+    local localPath = "Strafe/" .. fileName .. ".lua"
+    local webPath = fileName .. ".lua"
+    
+    local remoteContent = getContents(webPath)
+    if not remoteContent then 
+        warn("Strafe Failed to fetch " .. fileName)
+        return 
     end
 
-    return readfile(file)
+    local folder = localPath:match("(.+)/[^/]+$")
+    if folder then ensureFolder(folder) end
+
+    if not isfile(localPath) or readfile(localPath) ~= remoteContent then
+        writefile(localPath, remoteContent)
+        print("Strafe Updated " .. localPath)
+    end
 end
 
-if not isfolder('Strafe') then
-    makefolder('Strafe')
-    makefolder('Strafe/Games')
-    makefolder('Strafe/Configs')
-    makefolder('Strafe/Libraries')
-    makefolder('Strafe/Libraries/Bedwars')
-    makefolder('Strafe/Libraries/BedwarZ')
-    makefolder('Strafe/Libraries/BridgeDuels')
-end
+ensureFolder("Strafe/Configs")
 
 local Contents = {
     'Main',
@@ -42,18 +47,13 @@ local Contents = {
     'Libraries/FakeDamage',
     'Libraries/ProgressBar',
     'Libraries/BridgeDuels/Meta',
-
     'Games/BedwarZ',
     'Games/BridgeDuels',
 }
 
-for _, v in Contents do
-    if not isfile('Strafe/'..v..'.lua') then
-        install('Strafe/'..v..'.lua')
-    end
+for _, v in ipairs(Contents) do
+    syncFile(v)
 end
-
---return loadstring(install('Strafe/Main.lua'))()
 
 local GuiLibrary = loadfile('Strafe/GuiLibrary.lua')()
 local Games = loadfile('Strafe/Games.lua')()
@@ -61,22 +61,18 @@ loadfile('Strafe/Universal.lua')()
 
 shared.didQueue = false
 game:GetService('Players').LocalPlayer.OnTeleport:Connect(function()
-    if shared.didQueue then
-        return
+    if not shared.didQueue then
+        shared.didQueue = true
+        if queue_on_teleport then
+            queue_on_teleport([[loadfile('Strafe/Main.lua')()]])
+        end
     end
-
-    shared.didQueue = true
-    queue_on_teleport([[
-        loadfile('Strafe/Main.lua')()
-    ]])
 end)
 
-
-for i, v in Games do
-    for _, id in v do
+for i, v in pairs(Games) do
+    for _, id in ipairs(v) do
         if game.PlaceId == id then
             loadfile('Strafe/Games/'..i..'.lua')()
         end
     end
 end
-
