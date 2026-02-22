@@ -13,6 +13,7 @@ local function ensureFolder(path)
         current = current .. parts[i] .. "/"
         if not isfolder(current) then
             makefolder(current)
+        end
     end
 end
 
