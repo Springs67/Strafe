@@ -410,6 +410,9 @@ NoKnockback = GuiLibrary:registerModule({
     ['Window'] = 'Combat',
     ['Callback'] = function(callback)
         if callback then
+            if not Disabler.Enabled then
+                repeat task.wait() until Disabler.Enabled
+            end
             lEntity:WaitForChild('PlayerScripts'):WaitForChild('KnockbackScript').Enabled = false
         else
             lEntity:WaitForChild('PlayerScripts'):WaitForChild('KnockbackScript').Enabled = true
@@ -500,5 +503,6 @@ Stealer = GuiLibrary:registerModule({
         end
     end
 })
+
 
 game:GetService('LogService'):ClearOutput()
