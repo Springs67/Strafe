@@ -482,4 +482,23 @@ AutoSprint = GuiLibrary:registerModule({
     end
 })
 
+local teams = {"Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Pink", "Brown"}
+Stealer = GuiLibrary:registerModule({
+    ['Name'] = 'Stealer',
+    ['Window'] = 'Player',
+    ['Callback'] = function(callback)
+        if callback then
+            repeat
+                task.wait()
+                for _, clr in teams do
+                    for i = 1, 20 do
+                        Remotes:Get('TakeItemFromChest'):SendToServer(clr, i, '1')
+                        task.wait(0.02)
+                    end
+                end
+            until not Stealer.Enabled
+        end
+    end
+})
+
 game:GetService('LogService'):ClearOutput()
