@@ -33,6 +33,7 @@ if not isfolder('Strafe') then
 end
 
 local Contents = {
+    'Main',
     'Games',
     'Universal',
     'GuiLibrary',
@@ -78,3 +79,4 @@ for i, v in Games do
         end
     end
 end
+
