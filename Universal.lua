@@ -83,7 +83,7 @@ WatermarkInst.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 WatermarkInst.TextXAlignment = Enum.TextXAlignment.Left
 WatermarkInst.TextColor3 = Color3.fromRGB(255, 255, 255)
 WatermarkInst.TextSize = 25
-WatermarkInst.Text = ' Strafe 1.0.1 | dev '
+WatermarkInst.Text = ' Strafe 1.0.1 | Public '
 WatermarkInst.Font = Enum.Font.BuilderSansMedium
 WatermarkInst.Visible = false
 WatermarkInst.Size = UDim2.fromOffset(game:GetService('TextService'):GetTextSize(WatermarkInst.Text, WatermarkInst.TextSize, WatermarkInst.Font, Vector2.zero).X, 30)
@@ -122,3 +122,4 @@ local Watermark = GuiLibrary:registerModule({
         end
     end
 })]]
+
