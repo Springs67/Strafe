@@ -1,4 +1,5 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 if not Players.LocalPlayer then
     repeat task.wait() until Players.LocalPlayer
 end
@@ -44,6 +45,35 @@ ModuleList:registerToggle({
     end
 })
 
+local rgbVal = 0
+Interface = GuiLibrary:registerModule({
+    ['Name'] = 'Interface',
+    ['Window'] = 'Visual',
+}):registerSelector({
+    ['Name'] = 'Color Mode',
+    ['Values'] = {'Static', 'Fade', 'Rainbow', 'Rainbow 2'},
+    ['Callback'] = function(Value)
+        GuiLibrary.ColorMode = Value
+
+        if Value == 'Rainbow' or Value == 'Rainbow 2' then
+            RunService:BindToRenderStep('RGBStuff', 9999, function(dt)
+                rgbVal += (dt / 10)
+
+                if rgbVal > 1 then
+                    rgbVal = 0
+                end
+
+                GuiLibrary.GuiChange:Fire(Color3.fromHSV(rgbVal % 1, 0.6, 1))
+            end)
+        else
+            RunService:UnbindFromRenderStep('RGBStuff')
+        end
+
+        if Value == 'Static' then
+            GuiLibrary.GuiChange:Fire(Color3.fromRGB(0, 100, 255))
+        end
+    end
+})
 
 local WatermarkInst = Instance.new('TextLabel')
 WatermarkInst.Parent = GuiLibrary.screen
@@ -64,6 +94,10 @@ WatermarkTop.Size = UDim2.new(1, 0, 0, 3)
 WatermarkTop.BorderSizePixel = 1
 WatermarkTop.BorderColor3 = Color3.fromRGB(0, 0, 0)
 WatermarkTop.BackgroundColor3 = Color3.fromRGB(0, 100, 255)
+
+GuiLibrary.GuiChange.Event:Connect(function(val)
+    WatermarkTop.BackgroundColor3 = val
+end)
 
 if game:GetService("Players").LocalPlayer:WaitForChild('PlayerGui'):FindFirstChild('TopbarStandard') then
     game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild('TopbarStandard').Enabled = false

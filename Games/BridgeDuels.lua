@@ -1,5 +1,6 @@
 local GuiLibrary = shared.GuiLibrary
 
+local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -102,6 +103,7 @@ local function getEntitiesInRange(Range: number)
 
     return targets
 end
+
 local function getNearestEntity(Range: number)
     local Nearest, Distance = nil, math.huge
     local Ents = getEntitiesInRange(Range)
@@ -149,13 +151,17 @@ local Anims =  {
 local isBlocking = false
 local oldGrip = getCurrentViewmodelItem().Handle.MainPart.C1
 local function setBlocking(Weapon, Bool: boolean)
-    isBlocking = Bool
-    ReplicatedStorage.Modules.Knit.Services.ToolService.RF.ToggleBlockSword:InvokeServer(true, Weapon.Name)
+    local viewModel = getCurrentViewmodelItem()
 
-    if Bool then
-        getCurrentViewmodelItem().Handle.MainPart.C1 = oldGrip * CFrame.Angles(-180.01, 4, -42) + Vector3.new(-1, -0.5, -0.5)
-    else
-        getCurrentViewmodelItem().Handle.MainPart.C1 = oldGrip
+    if viewModel and viewModel:FindFirstChild('Handle') then
+       isBlocking = Bool
+        ReplicatedStorage.Modules.Knit.Services.ToolService.RF.ToggleBlockSword:InvokeServer(true, Weapon.Name)
+
+        if Bool then
+            viewModel.Handle.MainPart.C1 = oldGrip * CFrame.Angles(-180.01, 4, -42) + Vector3.new(-1, -0.5, -0.5)
+        else
+            viewModel.Handle.MainPart.C1 = oldGrip
+        end
     end
 end
 
@@ -171,9 +177,24 @@ local function sendAttackPacket(Nearest, Weapon)
     )
 end
 
+local function hasAnimationLoaded(Viewmodel)
+    for i, v in Viewmodel.AnimationController.Animator:GetPlayingAnimationTracks() do
+        if v.Animation.AnimationId == 'rbxassetid://81023102192808' then
+            return true
+        end
+    end
+
+    return false
+end
+
+local anim = Instance.new('Animation')
+anim.AnimationId = 'rbxassetid://81023102192808'
 KillAura = GuiLibrary:registerModule({
     ['Name'] = 'KillAura',
     ['Window'] = 'Combat',
+    ['ArrayText'] = function()
+        return AuraMode.Value
+    end,
     ['Callback'] = function(callback)
         if callback then
             local lastAttacked = tick()
@@ -188,34 +209,30 @@ KillAura = GuiLibrary:registerModule({
                 local Nearest = getNearestEntity(18)
                 local Viewmodel = getCurrentViewmodelItem()
 
-                if Weapon and Nearest and Viewmodel then
+                if Weapon and getNearestEntity(18) and Viewmodel then
                     if (tick() - lastBlocked) > 0.3 then
                         lastBlocked = tick()
                         setBlocking(Weapon, AutoBlock.Enabled)
                     end
 
-                    if (tick() - lastAttacked) < 0.2 then
+                    if (tick() - lastAttacked) < Meta.COOLDOWN then
                         return
                     end
 
                     if Animations.Enabled then
-                        if not funny2 then
-                            if not Viewmodel:FindFirstChild('Animation') then
-                                Instance.new('Animation', Viewmodel).AnimationId = 'rbxassetid://81023102192808'
-                            end
-                            Viewmodel.Animation.AnimationId = 'rbxassetid://81023102192808'
-                            
-                            funny2 = Viewmodel.AnimationController.Animator:LoadAnimation(Viewmodel.Animation)
-                            funny2:Play()
-                        else
-                            funny2:Play()
+                        if not hasAnimationLoaded(Viewmodel) then
+                            funny2 = Viewmodel.AnimationController.Animator:LoadAnimation(anim)
                         end
+
+                        funny2:Play()
                     end
 
                     lastAttacked = tick()
                     sendAttackPacket(Nearest, Weapon)
                 else
-                    setBlocking(Weapon, false)
+                    if isBlocking then
+                        setBlocking(Weapon, false)
+                    end
                 end
             end)
         else
@@ -244,6 +261,9 @@ blackList.FilterDescendantsInstances = {entityLib.char}
 Speed = GuiLibrary:registerModule({
     ['Name'] = 'Speed',
     ['Window'] = 'Movement',
+    ['ArrayText'] = function()
+        return SpeedMode.Value
+    end,
     ['Callback'] = function(callback)
         if callback then
             local currentSpeed = 20;
@@ -257,17 +277,22 @@ Speed = GuiLibrary:registerModule({
                 local onGround = workspace:Raycast(entityLib.root.CFrame.Position, Vector3.new(0, -3.65, 0), blackList)
 
                 if onGround then
-                    currentSpeed = GroundSpeed.Value
+                    if SpeedMode.Value == 'Bolar' then
+                        currentSpeed = 33
+                    else
+                        currentSpeed = GroundSpeed.Value
+                    end
+
                     airTime = tick()
                 else
-                    currentSpeed -= (AirFriction.Value * dt)
+                    currentSpeed -= ((SpeedMode.Value == 'Bolar' and 40 or (AirFriction.Value)) * dt)
 
-                    if currentSpeed < 20 then
-                        currentSpeed = 20
+                    if currentSpeed < 23 then
+                        currentSpeed = 23
                     end
 
                     if (tick() - airTime) > (FastFallTime.Value - 0.05) and (tick() - airTime) < (FastFallTime.Value + 0.05) and FastFall.Enabled then
-                        entityLib.root.AssemblyLinearVelocity = Vector3.new(0, -FastFallVelocity.Value, 0)
+                        entityLib.root.AssemblyLinearVelocity = Vector3.new(0, -(SpeedMode.Value == 'Bolar' and FastFallVelocity.Value or 20), 0)
                     end
                 end
 
@@ -277,6 +302,10 @@ Speed = GuiLibrary:registerModule({
             RunService:UnbindFromRenderStep('Speed')
         end
     end
+})
+SpeedMode = Speed:registerSelector({
+    ['Name'] = 'Mode',
+    ['Values'] = {'Bolar', 'Bolar Custom'}
 })
 GroundSpeed = Speed:registerSlider({
     ['Name'] = 'Ground Speed',
@@ -313,4 +342,34 @@ FastFallVelocity = Speed:registerSlider({
 Animations = GuiLibrary:registerModule({
     ['Name'] = 'Animations',
     ['Window'] = 'Visual',
+})
+
+ContextActionService:BindActionAtPriority('Flight', function(_, state)
+    return Enum.ContextActionResult.Sink
+end, false, 99999, Enum.KeyCode.R)
+
+Flight = GuiLibrary:registerModule({
+    ['Name'] = 'Flight',
+    ['Window'] = 'Movement',
+    ['Callback'] = function(callback)
+        if callback then
+            RunService:BindToRenderStep('Flight', 99999, function(dt)
+                if not entityLib.isAlive then
+                    return
+                end
+
+                local flyVal = 0
+
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    flyVal = 50
+                elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                    flyVal = -50
+                end
+
+                entityLib.root.AssemblyLinearVelocity = Vector3.new(entityLib.hum.MoveDirection.X * 28, flyVal, entityLib.hum.MoveDirection.Z * 28)
+            end)
+        else
+            RunService:UnbindFromRenderStep('Flight')
+        end
+    end
 })

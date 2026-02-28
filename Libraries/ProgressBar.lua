@@ -17,19 +17,19 @@ return {
         InsideFrame.BorderSizePixel = 0
         InsideFrame.BackgroundColor3 = Color3.fromRGB(0, 100, 255)
 
-        TweenService:Create(InsideFrame, TweenInfo.new(time), {
-            Size = UDim2.new(1, -4, 1, -4)
-        }):Play()
+        local troll = GuiLibrary.GuiChange.Event:Connect(function(val)
+            InsideFrame.BackgroundColor3 = val
+        end)
+
+        TweenService:Create(InsideFrame, TweenInfo.new(time), {Size = UDim2.new(1, -4, 1, -4)}):Play()
 
         task.delay(time, function()
-            TweenService:Create(TimerFrame, TweenInfo.new(1), {
-                Size = UDim2.fromOffset(0, 0)
-            }):Play()
-            TweenService:Create(InsideFrame, TweenInfo.new(1), {
-                Size = UDim2.fromScale(1, 1)
-            }):Play()
+            TweenService:Create(TimerFrame, TweenInfo.new(1), {Size = UDim2.fromOffset(0, 0)}):Play()
+            TweenService:Create(InsideFrame, TweenInfo.new(1), {Size = UDim2.fromScale(1, 1)}):Play()
+
             task.delay(0.9, function()
                 TimerFrame:Destroy()
+                troll:Disconnect()
             end)
         end)
     end
