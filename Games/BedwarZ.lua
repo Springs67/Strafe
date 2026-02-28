@@ -429,6 +429,12 @@ NoKnockback = GuiLibrary:registerModule({
     ['Window'] = 'Combat',
     ['Callback'] = function(callback)
         if callback then
+            repeat task.wait() until Disabler.Enabled
+
+            if not NoKnockback.Enabled then
+                return
+            end
+            
             lEntity:WaitForChild('PlayerScripts'):WaitForChild('KnockbackScript').Enabled = false
         else
             lEntity:WaitForChild('PlayerScripts'):WaitForChild('KnockbackScript').Enabled = true
