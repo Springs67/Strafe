@@ -191,11 +191,7 @@ Longjump = GuiLibrary:registerModule({
     end,
     ['Callback'] = function(callback)
         if callback then
-            progressBar.new(0.75)
-            entityLib.root.Anchored = true
-            task.wait(0.75)
             entityLib.root.CFrame += Vector3.new(0, 3, 0)
-            entityLib.root.Anchored = false
             fakeDamage.new()
 
             if not Longjump.Enabled then
@@ -457,11 +453,20 @@ NoKnockback = GuiLibrary:registerModule({
             if lEntity.Character then
                 lEntity.Character:WaitForChild('Humanoid', 99)
 
+                if lEntity.Kit.Value ~= 'Hacker' then
+                    repeat task.wait() until lEntity.Kit.Value == 'Hacker'
+                end
+
                 lEntity.Character.Humanoid:SetAttribute('KnockbackDisabled', true)
             end
 
             aided = lEntity.CharacterAdded:Connect(function(char)
                 char:WaitForChild('Humanoid', 999)
+
+                if lEntity.Kit.Value ~= 'Hacker' then
+                    repeat task.wait() until lEntity.Kit.Value == 'Hacker'
+                end
+
                 lEntity.Character.Humanoid:SetAttribute('KnockbackDisabled', true)
             end)
         else
@@ -544,25 +549,6 @@ AutoSprint = GuiLibrary:registerModule({
             TweenService:Create(workspace.CurrentCamera, TweenInfo.new(0.1), {FieldOfView = oldFOV}):Play()
             entityLib.hum.WalkSpeed = 16
             aidscon:Disconnect()
-        end
-    end
-})
-
-local teams = {"Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Pink", "Brown"}
-Stealer = GuiLibrary:registerModule({
-    ['Name'] = 'Stealer',
-    ['Window'] = 'Player',
-    ['Callback'] = function(callback)
-        if callback then
-            repeat
-                task.wait()
-                for _, clr in teams do
-                    for i = 1, 20 do
-                        Remotes:Get('TakeItemFromChest'):SendToServer(clr, i, '1')
-                        task.wait(0.02)
-                    end
-                end
-            until not Stealer.Enabled
         end
     end
 })
