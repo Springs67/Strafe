@@ -405,98 +405,105 @@ Scaffold = GuiLibrary:registerModule({
     end
 })
 
-local kitConnection
+local aided2
+local aided3
 local charAddedConnection
-local hooksRan = false
+local hooksRan
 
 Disabler = GuiLibrary:registerModule({
-    ['Name'] = 'Disabler',
-    ['Window'] = 'Misc',
-    ['ArrayText'] = function()
-        return 'Knockback'
-    end,
-    ['Callback'] = function(callback)
-        if callback then
+	['Name'] = 'Disabler',
+	['Window'] = 'Misc',
+	['ArrayText'] = function()
+		return 'Knockback'
+	end,
+	['Callback'] = function(callback)
+		if callback then
+			if getgc and hookfunction and debug and debug.info then
+				if not hooksRan then
+					print("disabler running, you're safe ❤️‍🩹")
+					local targets = {"Knockback", "Speed", "Hitbox", "UI", "Anchor", "Tags", "Sound", "Remotes", "Capes", "Beds", "Lighting"}
+					local removed = {}
 
-            if getgc and hookfunction and debug and debug.info then
-                if not hooksRan then
-                    print("disabler running, you're safe ❤️‍🩹")
-                    local targets = {"Knockback", "Speed", "Hitbox", "UI", "Anchor", "Tags", "Sound", "Remotes", "Capes", "Beds", "Lighting"}
-                    local removed = {}
+					pcall(function()
+						for _, obj in next, getgc(true) do
+							if typeof(obj) == "function" then
+								local source = debug.info(obj, "s")
+								if source then
+									for _, targetName in next, targets do
+										if source:match("%." .. targetName .. "$") then
+											hookfunction(obj, function() end)
+											table.insert(removed, {
+												name = targetName,
+												source = source
+											})
+											break
+										end
+									end
+								end
+							end
+						end
+					end)
 
-                    local success, err = pcall(function()
-                        for _, obj in next, getgc(true) do
-                            if typeof(obj) == "function" then
-                                local source = debug.info(obj, "s")
-                                if source then
-                                    for _, targetName in next, targets do
-                                        if source:match("%." .. targetName .. "$") then
-                                            hookfunction(obj, function() end)
-                                            table.insert(removed, {
-                                                name = targetName,
-                                                source = source
-                                            })
-                                            break
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                    end)
-                        print(("removed %d functions:"):format(#removed))
-                        print(string.rep("-", 50))
-                        for i, entry in ipairs(removed) do
-                        print(("#%d | target: %s | source: %s"):format(i, entry.name, entry.source))
-                    end
+					print(("removed %d functions:"):format(#removed))
+					print(string.rep("-", 50))
+					for i, entry in ipairs(removed) do
+						print(("#%d | target: %s | source: %s"):format(i, entry.name, entry.source))
+					end
 
-                    hooksRan = true
-                end
+					hooksRan = true
+				end
+			else
+				print("shitty executor, the disabler is not going to work on every check")
+				print("disabled the following checks: Walkspeed, Knockback")
 
-            else
-                print("shitty executor, the disabler is not going to work on every check")
-                print("disabled the following checks: Walkspeed, Knockback")
+				local function onCharacter(character)
+					local humanoid = character:WaitForChild("Humanoid", 10)
+					if humanoid then
+						humanoid:SetAttribute("KnockbackDisabled", true)
+					end
+				end
 
-                local function onCharacter(character)
-                    local humanoid = character:WaitForChild("Humanoid", 10)
-                    if humanoid then
-                        humanoid:SetAttribute("KnockbackDisabled", true)
-                    end
-                end
+				if lEntity.Character then
+					onCharacter(lEntity.Character)
+				end
 
-                if lEntity.Character then
-                    onCharacter(lEntity.Character)
-                end
+				charAddedConnection = lEntity.CharacterAdded:Connect(onCharacter)
+			end
 
-                charAddedConnection = lEntity.CharacterAdded:Connect(onCharacter)
+			lEntity:WaitForChild('Kit').Value = 'Hacker'
 
-                local kit = lEntity:WaitForChild('Kit', 5)
-                if kit then
-                    kit.Value = "Hacker"
-                    kitConnection = kit:GetPropertyChangedSignal('Value'):Connect(function()
-                        kit.Value = "Hacker"
-                    end)
-                end
-            end
+			aided2 = lEntity:WaitForChild('Kit'):GetPropertyChangedSignal('Value'):Connect(function()
+				lEntity:WaitForChild('Kit').Value = 'Hacker'
+			end)
 
-        else
---cleanup
---not cleaning up hookfunction (there's not really any reason you'd want to anyways)
-            if charAddedConnection then
-                charAddedConnection:Disconnect()
-                charAddedConnection = nil
-            end
+			lEntity:WaitForChild('PlayerGui'):WaitForChild('AbilitiesGui').Enabled = false
+			lEntity.PlayerGui:WaitForChild('HackGui').Enabled = false
 
-            if kitConnection then
-                kitConnection:Disconnect()
-                kitConnection = nil
-            end
+			aided3 = lEntity.PlayerGui:WaitForChild('HackGui'):GetPropertyChangedSignal('Enabled'):Connect(function()
+				lEntity.PlayerGui:WaitForChild('HackGui').Enabled = false
+			end)
+		else
+			if aided2 then
+				aided2:Disconnect()
+				aided2 = nil
+			end
 
-            local kit = lEntity:FindFirstChild('Kit')
-            if kit then
-                kit.Value = 'None'
-            end
-        end
-    end
+			if aided3 then
+				aided3:Disconnect()
+				aided3 = nil
+			end
+
+			if charAddedConnection then
+				charAddedConnection:Disconnect()
+				charAddedConnection = nil
+			end
+
+			local kit = lEntity:FindFirstChild('Kit')
+			if kit then
+				kit.Value = 'None'
+			end
+		end
+	end
 })
 
 local aided = nil
