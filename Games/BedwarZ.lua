@@ -418,7 +418,7 @@ Disabler = GuiLibrary:registerModule({
     ['Callback'] = function(callback)
         if callback then
             if ReplicatedStorage.Remotes.AdminRemotes:WaitForChild('RemoteEvent', 9) then
-                ReplicatedStorage.Remotes.AdminRemotes.RemoteEvent:Destroy()
+                --ReplicatedStorage.Remotes.AdminRemotes.RemoteEvent:Destroy()
             end
         end
     end
@@ -435,7 +435,7 @@ NoKnockback = GuiLibrary:registerModule({
                 return
             end
             
-            lEntity:WaitForChild('PlayerScripts'):WaitForChild('KnockbackScript').Enabled = false
+            --lEntity:WaitForChild('PlayerScripts'):WaitForChild('KnockbackScript').Enabled = false
         else
             lEntity:WaitForChild('PlayerScripts'):WaitForChild('KnockbackScript').Enabled = true
         end
