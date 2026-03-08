@@ -409,38 +409,75 @@ Scaffold = GuiLibrary:registerModule({
     end
 })
 
---[[Disabler = GuiLibrary:registerModule({
+local aided2;
+local aided3;
+Disabler = GuiLibrary:registerModule({
     ['Name'] = 'Disabler',
     ['Window'] = 'Misc',
     ['ArrayText'] = function()
-        return 'BedFight'
+        return 'Knockback'
     end,
     ['Callback'] = function(callback)
         if callback then
-            if ReplicatedStorage.Remotes.AdminRemotes:WaitForChild('RemoteEvent', 9) then
-                --ReplicatedStorage.Remotes.AdminRemotes.RemoteEvent:Destroy()
-            end
+            lEntity:WaitForChild('Kit').Value = 'Hacker'
+
+            aided2 = lEntity:WaitForChild('Kit'):GetPropertyChangedSignal('Value'):Connect(function()
+                lEntity:WaitForChild('Kit').Value = 'Hacker'
+            end)
+
+            lEntity:WaitForChild('PlayerGui'):WaitForChild('AbilitiesGui').Enabled = false
+            lEntity.PlayerGui:WaitForChild('HackGui').Enabled = false
+
+            aided3 = lEntity.PlayerGui:WaitForChild('HackGui'):GetPropertyChangedSignal('Enabled'):Connect(function()
+                lEntity.PlayerGui:WaitForChild('HackGui').Enabled = false
+            end)
+        else
+            aided3:Disconnect()
+            aided2:Disconnect()
+
+            lEntity:WaitForChild('Kit').Value = 'None'
         end
     end
 })
 
+local aided = nil
 NoKnockback = GuiLibrary:registerModule({
     ['Name'] = 'NoKnockback',
     ['Window'] = 'Combat',
     ['Callback'] = function(callback)
         if callback then
-            repeat task.wait() until Disabler.Enabled
+            if not Disabler.Enabled then
+                repeat task.wait() until Disabler.Enabled
+            end
 
             if not NoKnockback.Enabled then
                 return
             end
-            
-            --lEntity:WaitForChild('PlayerScripts'):WaitForChild('KnockbackScript').Enabled = false
+
+            if lEntity.Character then
+                lEntity.Character:WaitForChild('Humanoid', 99)
+
+                lEntity.Character.Humanoid:SetAttribute('KnockbackDisabled', true)
+            end
+
+            aided = lEntity.CharacterAdded:Connect(function(char)
+                char:WaitForChild('Humanoid', 999)
+                lEntity.Character.Humanoid:SetAttribute('KnockbackDisabled', true)
+            end)
         else
-            lEntity:WaitForChild('PlayerScripts'):WaitForChild('KnockbackScript').Enabled = true
+            if lEntity.Character then
+                lEntity.Character:WaitForChild('Humanoid', 99)
+
+                lEntity.Character.Humanoid:SetAttribute('KnockbackDisabled', false)
+            end
+
+            if aided then
+                aided:Disconnect()
+                aided = nil
+            end
         end
     end
-})]]
+})
 
 Breaker = GuiLibrary:registerModule({
     ['Name'] = 'Breaker',
