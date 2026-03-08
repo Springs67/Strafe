@@ -409,7 +409,7 @@ Scaffold = GuiLibrary:registerModule({
     end
 })
 
-Disabler = GuiLibrary:registerModule({
+--[[Disabler = GuiLibrary:registerModule({
     ['Name'] = 'Disabler',
     ['Window'] = 'Misc',
     ['ArrayText'] = function()
@@ -440,7 +440,7 @@ NoKnockback = GuiLibrary:registerModule({
             lEntity:WaitForChild('PlayerScripts'):WaitForChild('KnockbackScript').Enabled = true
         end
     end
-})
+})]]
 
 Breaker = GuiLibrary:registerModule({
     ['Name'] = 'Breaker',
