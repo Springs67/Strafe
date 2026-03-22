@@ -30,6 +30,19 @@ local getRoundedPos = function(Position: Vector3)
     return Vector3.new(X, Y, Z)
 end
 
+
+-- my goat dev forums
+local function worldCFrameToC0ObjectSpace(motor6DJoint,worldCFrame)
+	local part1CF = motor6DJoint.Part1.CFrame
+	local c1Store = motor6DJoint.C1
+	local c0Store = motor6DJoint.C0
+	local relativeToPart1 =c0Store*c1Store:Inverse()*part1CF:Inverse()*worldCFrame*c1Store
+	relativeToPart1 -= relativeToPart1.Position
+
+	local goalC0CFrame = relativeToPart1+c0Store.Position
+	return goalC0CFrame
+end
+
 local getNearestBed = function(Range: number)
     local nearest, nearestDist
 
@@ -125,14 +138,6 @@ local function getItem(item: string, plr)
     end
 
     return nil
-end
-
-local function getHoldingHand()
-    local Inventory = InventoryUtil.getInventory(lEntity)
-
-    if Inventory.hand then
-        return Inventory.hand
-    end
 end
 
 local function switchHand(name: string)
@@ -339,8 +344,30 @@ Strafe = GuiLibrary:registerModule({
     end
 })
 
+local swingFPAnimation = Instance.new('Animation'); swingFPAnimation.AnimationId = 'rbxassetid://80138703077151'
+local swingFPLoaded = nil;
+
+local swingAnimation = Instance.new('Animation'); swingAnimation.AnimationId = 'rbxassetid://123800159244236'
+local swingLoaded = nil;
+
+if entityLib.isAlive then
+    swingLoaded = entityLib.hum.Animator:LoadAnimation(swingAnimation)
+end
+
+lEntity.CharacterAdded:Connect(function(char)
+    repeat task.wait() until lEntity.Character and char and entityLib.isAlive
+
+    swingLoaded = entityLib.hum.Animator:LoadAnimation(swingAnimation)
+end)
+
+if workspace.CurrentCamera:FindFirstChild('ViewModel') and workspace.CurrentCamera:FindFirstChild('ViewModel'):FindFirstChild('AnimationController') then
+    swingFPLoaded = workspace.CurrentCamera:FindFirstChild('ViewModel'):FindFirstChild('AnimationController').Animator:LoadAnimation(swingFPAnimation)
+end
+
+local toolHandlers = game:GetService("ReplicatedStorage").ToolHandlers
+local oldC0 = lEntity.Character.Head.Neck.C0
 KillAura = GuiLibrary:registerModule({
-    ['Name'] = 'KillAura',
+    ['Name'] = 'SilentAura',
     ['Window'] = 'Combat',
     ['ArrayText'] = function()
         return AuraRange.Value
@@ -358,21 +385,52 @@ KillAura = GuiLibrary:registerModule({
                 local Sword = getItem('sword')
 
                 if Entity and Sword then
+                    if HoldItemCheck.Enabled and not lEntity.Character:FindFirstChild(Sword.itemType) then
+                        return
+                    end
+
+                    if DoRotations.Enabled then
+                        lEntity.Character.Head.Neck.C0 = worldCFrameToC0ObjectSpace(lEntity.Character.Head.Neck, CFrame.lookAt(entityLib.root.CFrame.Position, Entity.Character.PrimaryPart.CFrame.Position))
+                        entityLib.root.CFrame = CFrame.lookAt(entityLib.root.CFrame.Position, Vector3.new(Entity.Character.PrimaryPart.CFrame.Position.X, entityLib.root.CFrame.Y, Entity.Character.PrimaryPart.CFrame.Position.Z))
+                    end
+
                     if (tick() - lastSwitch) > 0.4 and (AutoSwitch and AutoSwitch.Enabled or false) then
                         lastSwitch = tick()
                         switchHand(Sword.itemType)
                     end
 
-                    if (tick() - lastAttacked) < 0.275 then
+                    if (tick() - lastAttacked) < (AuraDelay and AuraDelay.Value or 0.285) then
                         return
+                    end
+
+                    if PlaySwingAnim.Enabled then
+                        if not swingLoaded then
+                            swingLoaded = entityLib.hum.Animator:LoadAnimation(swingAnimation)
+                        end
+
+                        swingLoaded:Play()
+                        swingFPLoaded:Play()
+                    end
+
+                    if PlaySwingSound.Enabled then
+                        local var = tostring(math.round(math.random(1, 2)))
+
+                        if entityLib.root:FindFirstChild('Swing'..var) then
+                            entityLib.root:FindFirstChild('Swing'..var):Play()
+                        else
+                            toolHandlers.Sword.Sounds.Default['Swing'..var]:Clone().Parent = entityLib.root
+                        end
                     end
                     
                     lastAttacked = tick()
                     Remotes:Get('SwordHit'):SendToServer(Sword.itemType, Entity.Character)
+                else
+                    lEntity.Character.Head.Neck.C0 = oldC0
                 end
             end)
         else
             RunService:UnbindFromRenderStep('KillAura')
+            lEntity.Character.Head.Neck.C0 = oldC0
         end
     end
 })
@@ -383,8 +441,27 @@ AuraRange = KillAura:registerSlider({
     ['Maximum'] = 22,
     ['Default'] = 20,
 })
+AuraDelay = KillAura:registerSlider({
+    ['Name'] = 'Delay',
+    ['Step'] = 0.005,
+    ['Minimum'] = 0,
+    ['Maximum'] = 0.5,
+    ['Default'] = 0.285,
+})
 AutoSwitch = KillAura:registerToggle({
     ['Name'] = 'Switch To Weapon'
+})
+PlaySwingAnim = KillAura:registerToggle({
+    ['Name'] = 'Play Animation'
+})
+PlaySwingSound = KillAura:registerToggle({
+    ['Name'] = 'Play Sound'
+})
+DoRotations = KillAura:registerToggle({
+    ['Name'] = 'Rotations'
+})
+HoldItemCheck = KillAura:registerToggle({
+    ['Name'] = 'Hand Check'
 })
 
 Scaffold = GuiLibrary:registerModule({
@@ -496,26 +573,43 @@ Breaker = GuiLibrary:registerModule({
                     continue
                 end
 
-                local Bed = getNearestBed(30)
+                local Bed = getNearestBed(BreakerRange and BreakerRange.Value or 18)
                 local Pickaxe = getItem('pickaxe')
 
                 if Bed and Pickaxe then
-                    if (tick() - lastSwitched) > 0.3 then
-                        lastSwitched = tick()
-                        switchHand(Pickaxe.itemType)
+                    if (tick() - lastSwitched) < (BreakerDelay and BreakerDelay.Value or 0.5) then
+                        continue
                     end
+
+                    lastSwitched = tick()
+                    switchHand(Pickaxe.itemType)
+                    task.wait(0.05)
 
                     Remotes:Get('MineBlock'):SendToServer(
                         Pickaxe.itemType,
                         Bed.Parent,
                         Bed.Position,
-                        Bed.Position + Vector3.new(0, 3, 0),
-                        Vector3.new(0, -3, 0)
+                        Bed.Position + Vector3.new(0, 2, 0),
+                        Vector3.new(0, -1, 0)
                     )
                 end
             until not Breaker.Enabled
         end
     end
+})
+BreakerRange = Breaker:registerSlider({
+    ['Name'] = 'Range',
+    ['Step'] = 1,
+    ['Minimum'] = 10,
+    ['Maximum'] = 22,
+    ['Default'] = 20,
+})
+BreakerDelay = Breaker:registerSlider({
+    ['Name'] = 'Delay',
+    ['Step'] = 0.025,
+    ['Minimum'] = 0,
+    ['Maximum'] = 0.5,
+    ['Default'] = 0.5,
 })
 
 local oldFOV = lEntity:FindFirstChild('Settings').FOV.Value
@@ -533,6 +627,9 @@ AutoSprint = GuiLibrary:registerModule({
             end
 
             aidscon = workspace.CurrentCamera:GetPropertyChangedSignal('FieldOfView'):Connect(function()
+                if shared.Aiding then
+                    return
+                end
                 workspace.CurrentCamera.FieldOfView = oldFOV + 15
             end)
 

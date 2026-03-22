@@ -83,7 +83,7 @@ WatermarkInst.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 WatermarkInst.TextXAlignment = Enum.TextXAlignment.Left
 WatermarkInst.TextColor3 = Color3.fromRGB(255, 255, 255)
 WatermarkInst.TextSize = 25
-WatermarkInst.Text = ' Strafe 1.0.2 | Public '
+WatermarkInst.Text = ' Strafe 1.0.3 | Public '
 WatermarkInst.Font = Enum.Font.BuilderSansMedium
 WatermarkInst.Visible = false
 WatermarkInst.Size = UDim2.fromOffset(game:GetService('TextService'):GetTextSize(WatermarkInst.Text, WatermarkInst.TextSize, WatermarkInst.Font, Vector2.zero).X, 30)
@@ -123,4 +123,33 @@ local Watermark = GuiLibrary:registerModule({
     end
 })]]
 
+local fovAids = nil
+local oldFov = workspace.CurrentCamera.FieldOfView
+FieldOfView = GuiLibrary:registerModule({
+    ['Name'] = 'FieldOfView',
+    ['Window'] = 'Visual',
+    ['Callback'] = function(callback)
+        if callback then
+            oldFov = workspace.CurrentCamera.FieldOfView
 
+            shared.Aiding = true
+            workspace.CurrentCamera.FieldOfView = FieldOfViewValue.Value
+            fovAids = workspace.CurrentCamera:GetPropertyChangedSignal('FieldOfView'):Connect(function()
+                workspace.CurrentCamera.FieldOfView = FieldOfViewValue.Value
+            end)
+        else
+            fovAids:Disconnect();
+            workspace.CurrentCamera.FieldOfView = oldFov
+            shared.Aiding = false
+        end
+    end
+})
+FieldOfViewValue = FieldOfView:registerSlider({
+    ['Name'] = 'Value',
+    ['Minimum'] = 30,
+    ['Maximum'] = 120,
+    ['Default'] = 120,
+    ['Callback'] = function(value)
+        workspace.CurrentCamera.FieldOfView = value
+    end
+})
