@@ -1,5 +1,7 @@
 local Players = game:GetService("Players")
+local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
+
 if not Players.LocalPlayer then
     repeat task.wait() until Players.LocalPlayer
 end
@@ -83,7 +85,7 @@ WatermarkInst.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 WatermarkInst.TextXAlignment = Enum.TextXAlignment.Left
 WatermarkInst.TextColor3 = Color3.fromRGB(255, 255, 255)
 WatermarkInst.TextSize = 25
-WatermarkInst.Text = ' Strafe 1.0.3 | Public '
+WatermarkInst.Text = ' Strafe 1.0.4 | Public '
 WatermarkInst.Font = Enum.Font.BuilderSansMedium
 WatermarkInst.Visible = false
 WatermarkInst.Size = UDim2.fromOffset(game:GetService('TextService'):GetTextSize(WatermarkInst.Text, WatermarkInst.TextSize, WatermarkInst.Font, Vector2.zero).X, 30)
@@ -113,16 +115,6 @@ local Watermark = GuiLibrary:registerModule({
     end
 })
 
---[[local Nametags = GuiLibrary:registerModule({
-    ['Name'] = 'Nametags',
-    ['Window'] = 'Visual',
-    ['Callback'] = function(callback)
-        if callback then
-            
-        end
-    end
-})]]
-
 local fovAids = nil
 local oldFov = workspace.CurrentCamera.FieldOfView
 FieldOfView = GuiLibrary:registerModule({
@@ -151,5 +143,76 @@ FieldOfViewValue = FieldOfView:registerSlider({
     ['Default'] = 120,
     ['Callback'] = function(value)
         workspace.CurrentCamera.FieldOfView = value
+    end
+})
+
+local AmbientColors = {
+    ['Red'] = Color3.fromRGB(255, 0, 0),
+    ['Orange'] = Color3.fromRGB(255, 100, 0),
+    ['Yellow'] = Color3.fromRGB(255, 255, 0),
+    ['Green'] = Color3.fromRGB(0, 255, 0),
+    ['Blue'] = Color3.fromRGB(0, 0, 255),
+    ['Purple'] = Color3.fromRGB(100, 0, 255),
+    ['Pink'] = Color3.fromRGB(255, 0, 255)
+}
+
+local ambientIndexs = {}
+for index, _ in AmbientColors do
+    table.insert(ambientIndexs, index)
+end
+
+local oldAmbVals = {}
+Atmosphere = GuiLibrary:registerModule({
+    ['Name'] = 'Atmosphere',
+    ['Window'] = 'Visual',
+    ['Callback'] = function(callback)
+        if callback then
+            oldAmbVals['amb'] = Lighting.Ambient
+            oldAmbVals['outdoorAmb'] = Lighting.OutdoorAmbient
+
+            Lighting.Ambient = AtmosphereColors and AmbientColors[AtmosphereColors.Value] or Color3.fromRGB(255, 255, 255)
+            Lighting.OutdoorAmbient = AtmosphereColors and AmbientColors[AtmosphereColors.Value] or Color3.fromRGB(255, 255, 255)
+
+            Lighting.TimeOfDay = tostring(AtmosphereTime and AtmosphereTime.Value or 12)..':00:00'
+        else
+            Lighting.Ambient = oldAmbVals.amb
+            Lighting.OutdoorAmbient = oldAmbVals.outdoorAmb
+        end
+    end
+})
+AtmosphereColors = Atmosphere:registerSelector({
+    ['Name'] = 'Color',
+    ['Values'] = ambientIndexs,
+    ['Callback'] = function(value: string)
+        if not Atmosphere.Enabled then
+            return
+        end
+
+        Lighting.Ambient = AmbientColors[value]
+        Lighting.OutdoorAmbient = AmbientColors[value]
+    end
+})
+AtmosphereTime = Atmosphere:registerSlider({
+    ['Name'] = 'Time of Day',
+    ['Step'] = 1,
+    ['Minimum'] = 0,
+    ['Maximum'] = 24,
+    ['Default'] = 12,
+    ['Callback'] = function(value: number)
+        if not Atmosphere.Enabled then
+            return
+        end
+
+        Lighting.TimeOfDay = tostring(value)..':00:00'
+    end
+})
+
+local Nametags = GuiLibrary:registerModule({
+    ['Name'] = 'Nametags',
+    ['Window'] = 'Visual',
+    ['Callback'] = function(callback)
+        if callback then
+            
+        end
     end
 })

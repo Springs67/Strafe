@@ -46,13 +46,16 @@ end
 local getNearestBed = function(Range: number)
     local nearest, nearestDist
 
-    if workspace:FindFirstChild("BedsContainer") then
-        for i, v in ipairs(workspace.BedsContainer:GetChildren()) do
-            local hitbox = v:FindFirstChild("BedHitbox")
-            if hitbox then
-                local dist = lEntity:DistanceFromCharacter(hitbox.Position)
-                if dist <= Range and (not nearestDist or dist < nearestDist) then
-                    nearest, nearestDist = hitbox, dist
+    if workspace:FindFirstChild('BedsContainer') then
+        for _, value in workspace.BedsContainer:GetChildren() do
+            local Hitbox = value:FindFirstChild('BedHitbox')
+
+            if Hitbox then
+                local Distance = lEntity:DistanceFromCharacter(Hitbox.Position)
+
+                if Distance <= Range and (not nearestDist or Distance < nearestDist) then
+                    nearest = Hitbox
+                    nearestDist = Distance
                 end
             end
         end
@@ -156,7 +159,7 @@ local function getViewmodelSword()
     end
 end
 
-local function placeBlock(pos: Vector3)
+local function placeBlock(pos: Vector3, shouldCollide: boolean)
     local Wool = getItem('wool') or getItem('fake block')
 
     if Wool then
@@ -167,6 +170,7 @@ local function placeBlock(pos: Vector3)
         local Clone = ReplicatedStorage.Blocks[Wool.itemType]:Clone()
         Clone.Parent = workspace:FindFirstChildWhichIsA('Folder')
         Clone.Position = pos
+        Clone.CanCollide = shouldCollide or true
 
         task.delay(0.5, function()
             Clone:Destroy()
@@ -630,6 +634,7 @@ AutoSprint = GuiLibrary:registerModule({
                 if shared.Aiding then
                     return
                 end
+                
                 workspace.CurrentCamera.FieldOfView = oldFOV + 15
             end)
 
@@ -646,6 +651,46 @@ AutoSprint = GuiLibrary:registerModule({
             TweenService:Create(workspace.CurrentCamera, TweenInfo.new(0.1), {FieldOfView = oldFOV}):Play()
             entityLib.hum.WalkSpeed = 16
             aidscon:Disconnect()
+        end
+    end
+})
+
+AntiVoid = GuiLibrary:registerModule({
+    ['Name'] = 'AntiVoid',
+    ['Window'] = 'Movement',
+    ['Callback'] = function(callback)
+        if callback then
+            repeat
+                task.wait()
+                if not entityLib.isAlive then
+                    continue
+                end
+
+                if entityLib.root.CFrame.Y < 0 then
+                    entityLib.root.AssemblyLinearVelocity = Vector3.new(entityLib.root.AssemblyLinearVelocity.X, 100, entityLib.root.AssemblyLinearVelocity.Z)
+                end
+            until not AntiVoid.Enabled
+        end
+    end
+})
+
+NoFall = GuiLibrary:registerModule({
+    ['Name'] = 'NoFall',
+    ['Window'] = 'Player',
+    ['Callback'] = function(callback)
+        if callback then
+            repeat
+                task.wait()
+                if not entityLib.isAlive then
+                    continue
+                end
+
+                if entityLib.root.AssemblyLinearVelocity.Y < -90 then
+                    entityLib.root.AssemblyLinearVelocity = Vector3.new(entityLib.root.AssemblyLinearVelocity.X, -30, entityLib.root.AssemblyLinearVelocity.Z)
+                    placeBlock(entityLib.root.CFrame.Position - Vector3.new(0, 3, 0), false)
+                    entityLib.root.CFrame -= Vector3.new(0, 4, 0)
+                end
+            until not NoFall.Enabled
         end
     end
 })
