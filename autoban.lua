@@ -1,4 +1,4 @@
-⁹local textChatService = game:GetService('TextChatService')
+local textChatService = game:GetService('TextChatService')
 local playerService = game:GetService('Players')
 
 local excludedAccounts = {
