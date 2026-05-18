@@ -23,13 +23,16 @@ for _, value: Player in playerService:GetPlayers() do
     if table.find(excludedAccounts, value.Name) then
         continue end;
 
-    textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync('/ban ' .. value.Name)
-
+    task.spawn(function()
+		textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync('/ban ' .. value.Name)
+	end)
 end
 
 playerService.PlayerAdded:Connect(function(value: Player)
     if table.find(excludedAccounts, value.Name) then
         return end;
 
-    textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync('/ban ' .. value.Name)
+    task.spawn(function()
+		textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync('/ban ' .. value.Name)
+	end)
 end)
