@@ -7,7 +7,7 @@ for _, value: Player in playerService:GetPlayers() do
     if value == playerService.LocalPlayer then
         continue end;
 
-    textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync('/ban ' .. value.Name)
+    task.spawn(function() textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync('/ban ' .. value.Name) end)
     task.wait(1)
 end
 
