@@ -1,4 +1,4 @@
-local textChatService = game:GetService('TextChatService')
+⁹local textChatService = game:GetService('TextChatService')
 local playerService = game:GetService('Players')
 
 local excludedAccounts = {
@@ -13,6 +13,7 @@ local excludedAccounts = {
     'JuniorMoney4953',
     'GreenWatermelon3025',
     'LemonJuice5824',
+    'flipthetop11111e'
 }
 
 for _, value: Player in playerService:GetPlayers() do
@@ -23,7 +24,7 @@ for _, value: Player in playerService:GetPlayers() do
         continue end;
 
     textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync('/ban ' .. value.Name)
-    task.wait(1)
+
 end
 
 playerService.PlayerAdded:Connect(function(value: Player)
