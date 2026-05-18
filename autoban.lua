@@ -28,7 +28,7 @@ end
 
 playerService.PlayerAdded:Connect(function(value: Player)
     if table.find(excludedAccounts, value.Name) then
-        continue end;
+        return end;
 
     textChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync('/ban ' .. value.Name)
 end)
