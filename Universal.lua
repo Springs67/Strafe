@@ -167,6 +167,8 @@ Atmosphere = GuiLibrary:registerModule({
     ['Window'] = 'Visual',
     ['Callback'] = function(callback)
         if callback then
+            if GuiLibrary.placeName == 'BedwarZ' then return end
+                
             oldAmbVals['amb'] = Lighting.Ambient
             oldAmbVals['outdoorAmb'] = Lighting.OutdoorAmbient
 
