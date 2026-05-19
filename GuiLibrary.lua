@@ -88,6 +88,7 @@ local guiLibrary = {
 
 	GuiChange = Instance.new('BindableEvent'),
 	GuiColor = 0,
+	placeName = getGame(game.PlaceId),
 }
 
 local function shadowifyAids(label: TextLabel)
