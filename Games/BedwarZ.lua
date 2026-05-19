@@ -427,7 +427,7 @@ KillAura = GuiLibrary:registerModule({
                     end
                     
                     lastAttacked = tick()
-                    Remotes:Get('SwordHit'):SendToServer(Sword.itemType, Entity.Character)
+                    Remotes:Get('SwordHit'):SendToServer(Entity.Character, Sword.itemType)
                 else
                     lEntity.Character.Head.Neck.C0 = oldC0
                 end
