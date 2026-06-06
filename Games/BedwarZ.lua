@@ -14,7 +14,11 @@ if not lEntity.Character then
     lEntity.Character:WaitForChild('HumanoidRootPart', 999)
 end
 
+print('loaded 1')
+
 lEntity:WaitForChild('Settings')
+
+print('loaded 2')
 
 local GuiLibrary = shared.GuiLibrary
 local fakeDamage = loadfile('Strafe/Libraries/FakeDamage.lua')()
