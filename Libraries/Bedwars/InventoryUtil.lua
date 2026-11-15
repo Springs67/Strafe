@@ -1,111 +1,69 @@
-local InventoryUtil = {}
-InventoryUtil.Name = 'InventoryUtil'
+local InventoryUtil, Cached = {}, {};
 
-local function getIndex(obj)
-    for ind, value in obj.Parent:GetChildren() do
-        if value == obj then
-            return ind
+local cloneref = cloneref or function(obj) return obj end;
+local playersService = cloneref(game:GetService('Players'))
+local replicatedStorage = cloneref(game:GetService('ReplicatedStorage'));
+
+replicatedStorage:WaitForChild('Inventories', 99);
+
+function InventoryUtil.getInventory(plr: Player)
+    if typeof(plr) ~= "Instance" then
+        return warn('got non instance');
+    end
+    
+    if not plr:IsA('Player') then
+        return warn('got non player');
+    end
+    if not replicatedStorage.Inventories:FindFirstChild(plr.Name) then
+        return;
+    end
+
+    if not Cached[plr.UserId] then
+        Cached[plr.UserId] = {};
+    end
+    table.clear(Cached[plr.UserId]);
+
+    Cached[plr.UserId].items = {}
+    Cached[plr.UserId].armor = {}
+    Cached[plr.UserId].hand = nil
+
+    for _, value in replicatedStorage.Inventories:FindFirstChild(plr.Name):GetChildren() do
+        table.insert(Cached[plr.UserId].items, {
+            tool = value,
+            itemType = value.Name,
+            amount = value:GetAttribute('Amount'),
+            itemSkin = value:GetAttribute('ItemSkin'),
+            addedToBackpackTime = value:GetAttribute('AddedToBackpackTime'),
+        })
+    end
+
+    for index = 0, 2 do
+        local armInvItem = playersService.LocalPlayer.Character:FindFirstChild('ArmorInvItem_'..index)
+
+        if armInvItem and armInvItem.Value then
+            table.insert(Cached[plr.UserId].armor, {
+                tool = armInvItem.Value,
+                itemType = armInvItem.Value.Name,
+                amount = armInvItem.Value:GetAttribute('Amount'),
+                itemSkin = armInvItem.Value:GetAttribute('ItemSkin'),
+                addedToBackpackTime = armInvItem.Value:GetAttribute('AddedToBackpackTime'),
+            })
         end
     end
 
-    return 1
-end
+    local Hand = playersService.LocalPlayer.Character:FindFirstChild('HandInvItem')
 
-local Cache = {}
-function InventoryUtil.getInventory(plr: Player)
-    plr = plr or game:GetService('Players').LocalPlayer
-
-    local Inventory = game:GetService('ReplicatedStorage'):FindFirstChild('Inventories'):FindFirstChild(plr.Name)
-
-    if Inventory then
-        table.clear(Cache)
-
-        return {
-            items = (function()
-                for ind, value in Inventory:GetChildren() do
-                    table.insert(Cache, {
-                        itemType = value.Name,
-                        index = ind,
-                        tool = value,
-                    })
-                end
-
-                return Cache
-            end)(),
-            hand = (function()
-                if not plr.Character then
-                    return nil
-                end
-
-                local Hand = plr.Character:FindFirstChild('HandInvItem')
-                if Hand and Hand.Value ~= nil then
-                    return {
-                        itemType = Hand.Value.Name,
-                        index = getIndex(Hand.Value),
-                        tool = Hand.Value,
-                    }
-                end
-
-                return nil
-            end)()
+    if Hand and Hand.Value then
+        Cached[plr.UserId].hand = {
+            tool = Hand.Value,
+            itemType = Hand.Value.Name,
+            amount = Hand.Value:GetAttribute('Amount'),
+            itemSkin = Hand.Value:GetAttribute('ItemSkin'),
+            addedToBackpackTime = Hand.Value:GetAttribute('AddedToBackpackTime'),
         }
     end
-end
 
-function InventoryUtil:findItem(item: string, plr: Player)
-    plr = plr or game:GetService('Players').LocalPlayer
-
-    local Inventory = self.getInventory(plr)
-
-    for ind, value in Inventory.tools do
-        if value.itemType == item then
-            return value
-        end
-    end
-
-    return nil
-end
-
-function InventoryUtil:hasItem(item: string, plr: Player)
-    plr = plr or game:GetService('Players').LocalPlayer
-
-    local Inventory = self.getInventory(plr)
-
-    for ind, value in Inventory.tools do
-        if value.itemType == item then
-            return true
-        end
-    end
-
-    return false
-end
-
-function InventoryUtil:getRelativeItem(relString: string, plr: Player)
-    plr = plr or game:GetService('Players').LocalPlayer
-
-    local Inventory = self.getInventory(plr)
-
-    for ind, value in Inventory.tools do
-        if value.itemType:lower():find(relString:lower()) then
-            return value
-        end
-    end
-
-    return nil
-end
-
-function InventoryUtil:hasRelativeItem(relString: string, plr: Player)
-    plr = plr or game:GetService('Players').LocalPlayer
-
-    local Inventory = self.getInventory(plr)
-
-    for ind, value in Inventory.tools do
-        if value.itemType:lower():find(relString:lower()) then
-            return true
-        end
-    end
-
-    return false
+    return Cached[plr.UserId]
 end
 
 return InventoryUtil

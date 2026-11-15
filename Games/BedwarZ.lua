@@ -14,7 +14,11 @@ if not lEntity.Character then
     lEntity.Character:WaitForChild('HumanoidRootPart', 999)
 end
 
+print('loaded 1')
+
 lEntity:WaitForChild('Settings')
+
+print('loaded 2')
 
 local GuiLibrary = shared.GuiLibrary
 local fakeDamage = loadfile('Strafe/Libraries/FakeDamage.lua')()
@@ -369,6 +373,7 @@ if workspace.CurrentCamera:FindFirstChild('ViewModel') and workspace.CurrentCame
 end
 
 local toolHandlers = game:GetService("ReplicatedStorage").ToolHandlers
+local oldC0 = lEntity.Character.Head.Neck.C0
 KillAura = GuiLibrary:registerModule({
     ['Name'] = 'SilentAura',
     ['Window'] = 'Combat',
@@ -393,6 +398,7 @@ KillAura = GuiLibrary:registerModule({
                     end
 
                     if DoRotations.Enabled then
+                        lEntity.Character.Head.Neck.C0 = worldCFrameToC0ObjectSpace(lEntity.Character.Head.Neck, CFrame.lookAt(entityLib.root.CFrame.Position, Entity.Character.PrimaryPart.CFrame.Position))
                         entityLib.root.CFrame = CFrame.lookAt(entityLib.root.CFrame.Position, Vector3.new(Entity.Character.PrimaryPart.CFrame.Position.X, entityLib.root.CFrame.Y, Entity.Character.PrimaryPart.CFrame.Position.Z))
                     end
 
@@ -426,6 +432,8 @@ KillAura = GuiLibrary:registerModule({
                     
                     lastAttacked = tick()
                     Remotes:Get('SwordHit'):SendToServer(Entity.Character, Sword.itemType)
+                else
+                    lEntity.Character.Head.Neck.C0 = oldC0
                 end
             end)
         else
